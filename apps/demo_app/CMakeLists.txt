@@ -24,7 +24,7 @@ pkg_search_module(PC_GST_APP REQUIRED gstreamer-app-1.0) # `pkg-config --cflags 
 
 add_executable(
   demo_gst_app
-  main.c
+  main.cpp
 )
 
 
