@@ -1,14 +1,12 @@
 #include <gst/gst.h>
+#include <unistd.h>
 
 #define VIDEO_WIDTH   640
 #define VIDEO_HEIGHT  480
 #define VIDEO_FORMAT  "RGB16"
 #define PIXEL_SIZE    2
 
-static void cb_need_data (GstElement *appsrc, guint       unused_size, gpointer    user_data)
-{
-    static gboolean white = FALSE;
-    static GstClockTime timestamp = 0;
+static gboolean push_data(GstElement *appsrc) {
     GstBuffer *buffer;
     guint size;
     GstFlowReturn ret;
@@ -16,25 +14,24 @@ static void cb_need_data (GstElement *appsrc, guint       unused_size, gpointer 
     size = VIDEO_WIDTH * VIDEO_HEIGHT * PIXEL_SIZE;
     buffer = gst_buffer_new_allocate (NULL, size, NULL);
 
-    /* this makes the image black/white */
-    gst_buffer_memset (buffer, 0, white ? 0x44 : 0xCC, size);
+    GST_BUFFER_PTS (buffer) = GST_CLOCK_TIME_NONE;
+    GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 5);
 
-    white = !white;
+    gst_buffer_memset (buffer, 0, g_random_int(), size);
+    // Push the buffer into AppSrc
+    g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
 
-    GST_BUFFER_PTS (buffer) = timestamp;
-    GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 2);
+    // Free the buffer
+    gst_buffer_unref(buffer);
 
-    timestamp += GST_BUFFER_DURATION (buffer);
-
-    g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret);
-    gst_buffer_unref (buffer);
-
-    if (ret != GST_FLOW_OK)
-    {
-        /* something wrong, stop pushing */
-        g_printerr("push-buffer fail");;
+    if (ret != GST_FLOW_OK) {
+        // Something went wrong, stop pushing data
+        return FALSE;
     }
+
+    return TRUE;
 }
+
 
 int main(int argc, char ** argv)
 {
@@ -77,9 +74,7 @@ int main(int argc, char ** argv)
                      "height",    G_TYPE_INT,        VIDEO_HEIGHT,
                      "framerate", GST_TYPE_FRACTION, 0, 1,
                      NULL), NULL);
-    g_object_set (G_OBJECT (video_src_element), "stream-type", 0, "format", GST_FORMAT_TIME, NULL);
-
-    g_signal_connect (video_src_element, "need-data", G_CALLBACK (cb_need_data), NULL);
+    g_object_set (G_OBJECT (video_src_element), "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
 
     ret = gst_element_set_state(run_pipeline, GST_STATE_PLAYING);
 
@@ -90,12 +85,15 @@ int main(int argc, char ** argv)
         return -1;
     }
 
+    while(push_data(video_src_element))
+    {
+        sleep(1);
+    }
+
     bus = gst_element_get_bus(run_pipeline);
     msg = gst_bus_timed_pop_filtered (bus, GST_CLOCK_TIME_NONE, (GstMessageType) (GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
-
     if(msg != NULL)
         gst_message_unref(msg);
-
     gst_object_unref (bus);
     gst_element_set_state (run_pipeline, GST_STATE_NULL);
     gst_object_unref (run_pipeline);
