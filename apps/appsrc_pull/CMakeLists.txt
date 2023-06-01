@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(demo_gst_app)
+project(appsrc_pull)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -23,7 +23,7 @@ pkg_search_module(PC_GST_APP REQUIRED gstreamer-app-1.0) # `pkg-config --cflags 
 
 
 add_executable(
-  demo_gst_app
+  appsrc_pull
   main.cpp
 )
 
@@ -34,7 +34,7 @@ include_directories(
 )
 
 target_link_libraries(
-  demo_gst_app
+  appsrc_pull
   ${PC_GST_LDFLAGS}
   ${PC_GST_APP_LDFLAGS}
 )
