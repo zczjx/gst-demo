@@ -32,7 +32,7 @@ static void cb_need_data(GstElement *appsrc, guint unused_size, gpointer user_da
     if (ret != GST_FLOW_OK)
     {
         /* something wrong, stop pushing */
-        g_printerr("push-buffer fail");;
+        g_printerr("push-buffer fail");
     }
 }
 
