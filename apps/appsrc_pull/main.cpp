@@ -5,7 +5,7 @@
 #define VIDEO_FORMAT  "RGB16"
 #define PIXEL_SIZE    2
 
-static void cb_need_data (GstElement *appsrc, guint       unused_size, gpointer    user_data)
+static void cb_need_data(GstElement *appsrc, guint unused_size, gpointer user_data)
 {
     static gboolean white = FALSE;
     static GstClockTime timestamp = 0;

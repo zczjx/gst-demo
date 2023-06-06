@@ -9,25 +9,27 @@ int main(int argc, char ** argv)
     GstBus *bus;
     GstMessage *msg;
     GstElement* video_src_element;
+    GstElement* conv;
     GstElement* video_display_element;
     GstElement* run_pipeline;
 
     gst_init(&argc, &argv);
 
     video_src_element = gst_element_factory_make("videotestsrc", "video_src_element");
+    conv = gst_element_factory_make ("videoconvert", "conv");
     video_display_element = gst_element_factory_make("autovideosink", "video_display_element");
 
     run_pipeline = gst_pipeline_new ("run_pipeline");
 
-    if (!video_src_element || !video_display_element || !run_pipeline)
+    if (!video_src_element || !conv || !video_display_element || !run_pipeline)
     {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
 
-    gst_bin_add_many(GST_BIN(run_pipeline), video_src_element, video_display_element, NULL);
+    gst_bin_add_many(GST_BIN(run_pipeline), video_src_element, conv, video_display_element, NULL);
 
-    if(gst_element_link(video_src_element, video_display_element) != TRUE)
+    if(gst_element_link_many(video_src_element, conv, video_display_element, NULL) != TRUE)
     {
         g_printerr ("Elements could not be linked.\n");
         gst_object_unref(run_pipeline);
