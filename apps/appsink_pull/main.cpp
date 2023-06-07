@@ -115,6 +115,8 @@ int main(int argc, char ** argv)
 
     /* setup videotest_src */
     g_object_set(videotest_src1, "pattern", 19, NULL);
+    GstPadTemplate *video_src_pad_templ = gst_element_get_pad_template(videotest_src1, "src");
+    GstCaps *video_src_pad_caps = 	gst_pad_template_get_caps(video_src_pad_templ);
 
     /* setup appsrc */
     g_object_set (G_OBJECT (app_src), "caps",
@@ -124,7 +126,6 @@ int main(int argc, char ** argv)
                      "height",    G_TYPE_INT,        VIDEO_HEIGHT,
                      "framerate", GST_TYPE_FRACTION, 0, 1,
                      NULL), NULL);
-
     g_object_set (G_OBJECT (app_src), "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
 
     /* setup appsink */
